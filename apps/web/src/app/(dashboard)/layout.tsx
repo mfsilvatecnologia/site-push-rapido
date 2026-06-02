@@ -1,5 +1,6 @@
 import DashboardLayout from "@/components/DashboardLayout";
 import ProtectedGate from "@/components/ProtectedGate";
+import { QueryProvider } from "@/components/QueryProvider";
 import { SiteProvider } from "@/components/SiteProvider";
 
 export default function DashboardRootLayout({
@@ -9,9 +10,11 @@ export default function DashboardRootLayout({
 }) {
   return (
     <ProtectedGate>
-      <SiteProvider>
-        <DashboardLayout>{children}</DashboardLayout>
-      </SiteProvider>
+      <QueryProvider>
+        <SiteProvider>
+          <DashboardLayout>{children}</DashboardLayout>
+        </SiteProvider>
+      </QueryProvider>
     </ProtectedGate>
   );
 }

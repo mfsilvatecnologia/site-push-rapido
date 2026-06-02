@@ -136,6 +136,7 @@ export interface Campaign {
   mensagem: string;
   url_destino: string;
   icone_url: string | null;
+  banner_url: string | null;
   status: string;
   total_alvo: number;
   total_entregues: number;
@@ -367,20 +368,74 @@ export const api = {
     mensagem: string;
     url_destino: string;
     icone_url?: string;
+    banner_url?: string;
   }) =>
-    request<{ id: string }>("/v1/campaigns", {
+    request<{ id: string; banner_url: string | null }>("/v1/campaigns", {
       method: "POST",
       body: JSON.stringify(body),
     }),
 
   updateCampaign: (
     id: string,
-    body: { titulo: string; mensagem: string; url_destino: string; icone_url?: string }
+    body: {
+      titulo: string;
+      mensagem: string;
+      url_destino: string;
+      icone_url?: string;
+      banner_url?: string;
+    }
   ) =>
-    request<{ id: string; updated: boolean }>(`/v1/campaigns/${id}`, {
-      method: "PUT",
-      body: JSON.stringify(body),
-    }),
+    request<{ id: string; updated: boolean; banner_url: string | null }>(
+      `/v1/campaigns/${id}`,
+      {
+        method: "PUT",
+        body: JSON.stringify(body),
+      }
+    ),
+
+  resolveYoutubeThumbnail: (url: string, options?: { signal?: AbortSignal }) => {
+    const trimmed = url.trim();
+    const normalized = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+    return request<{ thumbnail_url: string; video_id: string }>(
+      `/v1/utils/youtube-thumbnail?url=${encodeURIComponent(normalized)}`,
+      { signal: options?.signal }
+    );
+  },
+
+  uploadCampaignBanner: async (
+    file: File,
+    siteId?: string | number
+  ): Promise<{ banner_url: string }> => {
+    const token = getToken();
+    const selectedSiteId = getSelectedSiteId();
+    const resolvedSiteId = siteId ?? selectedSiteId ?? undefined;
+    const headers: Record<string, string> = {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(resolvedSiteId ? { "X-Site-Id": String(resolvedSiteId) } : {}),
+    };
+    const url = `${getApiBase()}/api${sitePath(resolvedSiteId, "/campaign-banner")}`;
+    const form = new FormData();
+    form.append("file", file);
+    let res: Response;
+    try {
+      res = await fetch(url, {
+        method: "POST",
+        headers,
+        body: form,
+      });
+    } catch (err) {
+      if (err instanceof TypeError) {
+        throw new Error(networkErrorMessage(url));
+      }
+      throw err;
+    }
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: res.statusText }));
+      const raw = (err as { error?: unknown }).error;
+      throw new Error(typeof raw === "string" ? raw : res.statusText);
+    }
+    return res.json();
+  },
 
   sendCampaign: (id: string) =>
     request<{ queued: boolean; total_alvo: number; estimated_seconds: number }>(
@@ -389,7 +444,10 @@ export const api = {
     ),
 
   testCampaign: (id: string, body?: { subscription_id?: string; endpoint?: string }) =>
-    request<{ sent: boolean }>(`/v1/campaigns/${id}/test`, {
+    request<{
+      sent: boolean;
+      payload?: { icon: string | null; image: string | null };
+    }>(`/v1/campaigns/${id}/test`, {
       method: "POST",
       body: JSON.stringify(body ?? {}),
     }),

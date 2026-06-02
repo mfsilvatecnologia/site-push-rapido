@@ -1,5 +1,5 @@
-import Campanhas from "@/components/pages/Campanhas";
+import CampaignsListPage from "@/components/pages/CampaignsListPage";
 
 export default function CampanhasPage() {
-  return <Campanhas />;
+  return <CampaignsListPage />;
 }

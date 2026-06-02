@@ -570,6 +570,42 @@
   gap: 12px;
 }
 
+.ui-page .banner-preview {
+  width: 96px;
+  height: 54px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  object-fit: cover;
+}
+
+.notif-preview-banner {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  border-radius: 8px;
+  object-fit: cover;
+  max-height: 140px;
+}
+
+.notif-preview.windows .notif-preview-banner-hero {
+  margin: -16px -16px 12px;
+  width: calc(100% + 32px);
+  max-height: 160px;
+  border-radius: 10px 10px 0 0;
+  margin-top: -16px;
+}
+
+.notif-preview-icon-shell.windows .notif-preview-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+}
+
+.notif-preview-icon-shell.windows.notif-preview-icon-fallback::after {
+  content: "🌐";
+  font-size: 1.25rem;
+}
+
 .ui-empty {
   padding: 24px;
   background: #fff;
