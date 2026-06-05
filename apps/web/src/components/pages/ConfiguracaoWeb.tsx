@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { api, PromptConfig, SetupStatus, SiteConfig, SnippetResponse, parseApiError } from "@/lib/api";
 import { useSiteContext } from "@/components/SiteProvider";
+import { SettingToggle } from "@/components/SettingToggle";
 
 type SettingsTab = "setup" | "prompt" | "install" | "devices";
 
@@ -487,33 +488,25 @@ export default function ConfiguracaoWeb({ initialTab = "setup" }: { initialTab?:
                 <aside className="ui-side-card">
                   <h3>Opções avançadas</h3>
                   <p>Recupera inscrições quando o navegador limpa os dados.</p>
-                  <div className="ui-side-list">
-                    <label className="ui-checkbox">
-                      <input
-                        type="checkbox"
-                        checked={autoResubscribe}
-                        onChange={(e) => setAutoResubscribe(e.target.checked)}
-                      />
-                      <span>Reinscrever automaticamente após limpeza de dados do navegador</span>
-                    </label>
-
-                    <label className="ui-checkbox">
-                      <input
-                        type="checkbox"
-                        checked={allowLocalhost}
-                        onChange={(e) => setAllowLocalhost(e.target.checked)}
-                      />
-                      <span>Permitir HTTP apenas em localhost para testes internos</span>
-                    </label>
-
-                    <label className="ui-checkbox">
-                      <input
-                        type="checkbox"
-                        checked={welcomeEnabled}
-                        onChange={(e) => setWelcomeEnabled(e.target.checked)}
-                      />
-                      <span>Notificação de boas-vindas ao inscrever</span>
-                    </label>
+                  <div className="ui-setting-list">
+                    <SettingToggle
+                      checked={autoResubscribe}
+                      onChange={setAutoResubscribe}
+                      label="Reinscrição automática"
+                      description="Recupera a inscrição após limpeza de dados do navegador."
+                    />
+                    <SettingToggle
+                      checked={allowLocalhost}
+                      onChange={setAllowLocalhost}
+                      label="Permitir HTTP em localhost"
+                      description="Apenas para testes internos no ambiente local."
+                    />
+                    <SettingToggle
+                      checked={welcomeEnabled}
+                      onChange={setWelcomeEnabled}
+                      label="Notificação de boas-vindas"
+                      description="Envia uma mensagem ao concluir a inscrição."
+                    />
                   </div>
                 </aside>
               </div>
@@ -587,14 +580,14 @@ export default function ConfiguracaoWeb({ initialTab = "setup" }: { initialTab?:
                   </div>
                 </div>
               ) : null}
-              <label className="ui-checkbox">
-                <input
-                  type="checkbox"
+              <div className="ui-setting-list">
+                <SettingToggle
                   checked={mobileTested}
-                  onChange={(e) => setMobileTested(e.target.checked)}
+                  onChange={setMobileTested}
+                  label="Testado em celular"
+                  description="Confirmei a inscrição em um Android ou iPhone (PWA)."
                 />
-                <span>Marquei que testei a inscrição em um celular (Android ou iPhone PWA)</span>
-              </label>
+              </div>
               <div className="ui-actions">
                 <button type="button" className="btn btn-primary" onClick={() => void save(undefined, "Status mobile salvo.")} disabled={saving}>
                   {saving ? "Salvando..." : "Salvar status de teste"}
@@ -611,60 +604,78 @@ export default function ConfiguracaoWeb({ initialTab = "setup" }: { initialTab?:
                 Permitir. Em Android, prefira desligar o prompt automático se o Chrome bloquear permissões.
               </div>
 
-              <label className="ui-checkbox">
-                <input
-                  type="checkbox"
-                  checked={autoPromptEnabled}
-                  onChange={(e) =>
-                    setPrompt((current) => ({
-                      ...current,
-                      autoPromptDelayMs: e.target.checked ? Math.max(current.autoPromptDelayMs, 3000) : 0,
-                    }))
-                  }
-                />
-                <span>Acionar automaticamente</span>
-              </label>
-
-              <div className="ui-field-group">
-                <h3>Mensagem do prompt</h3>
-                <textarea
-                  value={prompt.slidedown.actionMessage}
-                  onChange={(e) =>
-                    setPrompt((current) => ({
-                      ...current,
-                      slidedown: { ...current.slidedown, actionMessage: e.target.value },
-                    }))
-                  }
-                  rows={3}
-                />
-              </div>
-
-              <div className="ui-grid-two">
-                <div className="ui-field-group">
-                  <h3>Botão aceitar</h3>
-                  <input
-                    value={prompt.slidedown.acceptButton}
-                    onChange={(e) =>
+              <div className="ui-setting-group">
+                <h3 className="ui-setting-group-label">Comportamento do prompt</h3>
+                <div className="ui-setting-list">
+                  <SettingToggle
+                    checked={autoPromptEnabled}
+                    onChange={(checked) =>
                       setPrompt((current) => ({
                         ...current,
-                        slidedown: { ...current.slidedown, acceptButton: e.target.value },
+                        autoPromptDelayMs: checked ? Math.max(current.autoPromptDelayMs, 3000) : 0,
                       }))
                     }
+                    label="Acionar automaticamente"
+                    description="Exibe o prompt após o atraso configurado."
                   />
-                </div>
-                <div className="ui-field-group">
-                  <h3>Botão cancelar</h3>
-                  <input
-                    value={prompt.slidedown.cancelButton}
-                    onChange={(e) =>
+                  <SettingToggle
+                    checked={prompt.nativePromptOnly ?? false}
+                    onChange={(checked) =>
                       setPrompt((current) => ({
                         ...current,
-                        slidedown: { ...current.slidedown, cancelButton: e.target.value },
+                        nativePromptOnly: checked,
                       }))
                     }
+                    label="Usar apenas o prompt nativo"
+                    description="Pula o popup personalizado e mostra direto o diálogo do navegador (Permitir / Bloquear)."
                   />
                 </div>
               </div>
+
+              {!prompt.nativePromptOnly ? (
+                <>
+                  <div className="ui-field-group">
+                    <h3>Mensagem do prompt</h3>
+                    <textarea
+                      value={prompt.slidedown.actionMessage}
+                      onChange={(e) =>
+                        setPrompt((current) => ({
+                          ...current,
+                          slidedown: { ...current.slidedown, actionMessage: e.target.value },
+                        }))
+                      }
+                      rows={3}
+                    />
+                  </div>
+
+                  <div className="ui-grid-two">
+                    <div className="ui-field-group">
+                      <h3>Botão aceitar</h3>
+                      <input
+                        value={prompt.slidedown.acceptButton}
+                        onChange={(e) =>
+                          setPrompt((current) => ({
+                            ...current,
+                            slidedown: { ...current.slidedown, acceptButton: e.target.value },
+                          }))
+                        }
+                      />
+                    </div>
+                    <div className="ui-field-group">
+                      <h3>Botão cancelar</h3>
+                      <input
+                        value={prompt.slidedown.cancelButton}
+                        onChange={(e) =>
+                          setPrompt((current) => ({
+                            ...current,
+                            slidedown: { ...current.slidedown, cancelButton: e.target.value },
+                          }))
+                        }
+                      />
+                    </div>
+                  </div>
+                </>
+              ) : null}
 
               {autoPromptEnabled ? (
                 <div className="ui-field-group">
@@ -695,44 +706,65 @@ export default function ConfiguracaoWeb({ initialTab = "setup" }: { initialTab?:
                 />
               </div>
 
-              <div className="ui-grid-two">
-                <SlidedownPreview prompt={prompt} />
-                <SlidedownPreview prompt={prompt} compact />
+              {!prompt.nativePromptOnly ? (
+                <div className="ui-grid-two">
+                  <SlidedownPreview prompt={prompt} />
+                  <SlidedownPreview prompt={prompt} compact />
+                </div>
+              ) : null}
+
+              <div className="ui-setting-group">
+                <h3 className="ui-setting-group-label">iPhone</h3>
+                <div className="ui-setting-list">
+                  <SettingToggle
+                    checked={prompt.disableIos ?? false}
+                    onChange={(checked) =>
+                      setPrompt((current) => ({
+                        ...current,
+                        disableIos: checked,
+                      }))
+                    }
+                    label="Desativar push no iPhone"
+                    description="O SDK não exibe sino, popup ou mensagem em iPhones e iPads."
+                  />
+                </div>
               </div>
 
-              <div className="ui-field-group">
-                <h3>Mensagens para iPhone (SDK)</h3>
-                <p className="hint">Exibidas quando o visitante usa Chrome no iOS ou Safari sem PWA.</p>
-                <textarea
-                  rows={2}
-                  value={prompt.mobile?.unsupportedBrowserMessage ?? ""}
-                  onChange={(e) =>
-                    setPrompt((current) => ({
-                      ...current,
-                      mobile: {
-                        ...current.mobile,
-                        unsupportedBrowserMessage: e.target.value,
-                      },
-                    }))
-                  }
-                  placeholder={defaultPrompt.mobile?.unsupportedBrowserMessage}
-                />
-                <textarea
-                  rows={4}
-                  style={{ marginTop: 12 }}
-                  value={prompt.mobile?.iosInstallSteps ?? ""}
-                  onChange={(e) =>
-                    setPrompt((current) => ({
-                      ...current,
-                      mobile: {
-                        ...current.mobile,
-                        iosInstallSteps: e.target.value,
-                      },
-                    }))
-                  }
-                  placeholder="Uma linha por passo (use Enter entre passos)"
-                />
-              </div>
+              {!prompt.disableIos ? (
+                <div className="ui-field-group">
+                  <h3>Mensagens para iPhone (SDK)</h3>
+                  <p className="hint">Exibidas quando o visitante usa Chrome no iOS ou Safari sem PWA.</p>
+                  <textarea
+                    rows={2}
+                    value={prompt.mobile?.unsupportedBrowserMessage ?? ""}
+                    onChange={(e) =>
+                      setPrompt((current) => ({
+                        ...current,
+                        mobile: {
+                          ...current.mobile,
+                          unsupportedBrowserMessage: e.target.value,
+                        },
+                      }))
+                    }
+                    placeholder={defaultPrompt.mobile?.unsupportedBrowserMessage}
+                  />
+                  <textarea
+                    rows={4}
+                    style={{ marginTop: 12 }}
+                    value={prompt.mobile?.iosInstallSteps ?? ""}
+                    onChange={(e) =>
+                      setPrompt((current) => ({
+                        ...current,
+                        mobile: {
+                          ...current.mobile,
+                          iosInstallSteps: e.target.value,
+                        },
+                      }))
+                    }
+                    placeholder="Uma linha por passo (use Enter entre passos)"
+                  />
+                </div>
+              ) : null}
 
               <div className="ui-actions">
                 <button type="button" className="btn btn-primary" onClick={() => void save(undefined, "Prompts atualizados.")} disabled={saving}>

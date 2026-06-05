@@ -162,6 +162,8 @@ export interface PromptConfig {
   };
   bell: { tooltip: string };
   autoPromptDelayMs: number;
+  nativePromptOnly?: boolean;
+  disableIos?: boolean;
   mobile?: PromptMobileConfig;
 }
 
