@@ -164,6 +164,7 @@ export interface PromptConfig {
   autoPromptDelayMs: number;
   nativePromptOnly?: boolean;
   disableIos?: boolean;
+  hideBell?: boolean;
   mobile?: PromptMobileConfig;
 }
 

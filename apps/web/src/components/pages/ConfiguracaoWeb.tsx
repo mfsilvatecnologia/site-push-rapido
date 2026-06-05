@@ -629,6 +629,17 @@ export default function ConfiguracaoWeb({ initialTab = "setup" }: { initialTab?:
                     label="Usar apenas o prompt nativo"
                     description="Pula o popup personalizado e mostra direto o diálogo do navegador (Permitir / Bloquear)."
                   />
+                  <SettingToggle
+                    checked={prompt.hideBell ?? false}
+                    onChange={(checked) =>
+                      setPrompt((current) => ({
+                        ...current,
+                        hideBell: checked,
+                      }))
+                    }
+                    label="Ocultar sino flutuante"
+                    description="Remove o ícone azul no canto da tela; o prompt automático continua funcionando."
+                  />
                 </div>
               </div>
 
