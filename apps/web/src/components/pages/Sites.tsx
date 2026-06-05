@@ -18,6 +18,7 @@ export default function Sites() {
   const { sites, selectedSiteId, selectSite, refreshSites, loading: loadingSites, error } =
     useSiteContext();
   const [editingSiteId, setEditingSiteId] = useState<string | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
   const [form, setForm] = useState<SiteInput>(emptyForm());
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
@@ -29,6 +30,8 @@ export default function Sites() {
   );
 
   useEffect(() => {
+    if (isCreating) return;
+
     if (!sites.length) {
       setEditingSiteId(null);
       setForm(emptyForm());
@@ -66,11 +69,12 @@ export default function Sites() {
           });
         });
     }
-  }, [activeSite, editingSiteId, sites]);
+  }, [activeSite, editingSiteId, isCreating, sites]);
 
   async function startEdit(siteId: string | number) {
     try {
       const site = await api.getSite(siteId);
+      setIsCreating(false);
       setEditingSiteId(String(site.id));
       setForm({
         nome: site.nome,
@@ -96,6 +100,7 @@ export default function Sites() {
   }
 
   function startCreate() {
+    setIsCreating(true);
     setEditingSiteId(null);
     setForm(emptyForm());
     setMessage("");
@@ -110,14 +115,16 @@ export default function Sites() {
 
     setSaving(true);
     setMessage("");
+    const creating = isCreating || !editingSiteId;
     try {
-      const site: SiteConfig = editingSiteId
-        ? await api.updateSite(form, editingSiteId)
-        : await api.createSite(form);
+      const site: SiteConfig = creating
+        ? await api.createSite(form)
+        : await api.updateSite(form, editingSiteId);
       selectSite(site.id);
       await refreshSites();
+      setIsCreating(false);
       setEditingSiteId(String(site.id));
-      setMessage(editingSiteId ? "Site atualizado com sucesso." : "Site criado com sucesso.");
+      setMessage(creating ? "Site criado com sucesso." : "Site atualizado com sucesso.");
       setMessageType("ok");
     } catch (err) {
       setMessage(parseApiError(err));
@@ -209,7 +216,7 @@ export default function Sites() {
           <div className="ui-section-heading">
             <Settings size={20} />
             <div>
-              <h3>{editingSiteId ? "Editar site" : "Cadastrar site"}</h3>
+              <h3>{isCreating || !editingSiteId ? "Cadastrar site" : "Editar site"}</h3>
             </div>
           </div>
 
@@ -247,7 +254,7 @@ export default function Sites() {
                 Limpar
               </button>
               <button type="button" className="btn btn-primary" onClick={() => void saveSite()} disabled={saving}>
-                {saving ? "Salvando..." : editingSiteId ? "Salvar site" : "Criar site"}
+                {saving ? "Salvando..." : isCreating || !editingSiteId ? "Criar site" : "Salvar site"}
               </button>
             </div>
           </div>
